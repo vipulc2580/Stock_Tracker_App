@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<main class="container py-5">
+    <h1 class="mb-4">Welcome to the Stock Tracker App</h1>
+    <p>Track your favorite stocks and get real-time updates!</p>
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+          <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+              <h5 class="mb-0">Select Stocks to Track</h5>
+            </div>
+            <div class="card-body">
+              <form action="{% url 'stock_tracker'%}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="stockSelect" class="form-label">Choose Stock(s)</label>
+                  <select class="form-select" id="stockSelect" name="stocks" multiple>
+                    {% for stock_ticker in stock_tickers %}
+                      {% comment %} {% for name,ticker  in stocker_ticker.items  %}
+                       <option value="{{ticker}}">{{name}}</option>
+                       {% endfor %} {% endcomment %}
+                       {% for name,ticker in stock_ticker.items %}
+                       <option value="{{ ticker }}|{{ name }}">{{name}}</option>
+                       {% endfor %}
+                    {% endfor %}
+                  </select>
+                  <div class="form-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple stocks.</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Track Selected Stocks</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock content %}

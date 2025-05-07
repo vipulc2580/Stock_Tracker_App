@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-md-12">
+        <div class="card shadow-sm">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Your Tracked Stocks</h5>
+            <span class="badge bg-primary">Updated: Just now</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover mb-0 align-middle">
+                <thead class="table-dark">
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Stock</th>
+                    <th scope="col">Symbol</th>
+                    <th scope="col">Current Price</th>
+                    <th scope="col">Change</th>
+                    <th scope="col">Market Cap</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {% for name,data in stocks_data.items %}
+                    <th scope="row">{{forloop.counter}}</th>
+                    <td id='{{name}}'>{{name}}</td>
+                    {% for key,value in data.items %}
+                        {% if key == 'change'%}
+                        <td id="{{name}}_{{key}}" class="{% if value < 0 %}text-danger{% else %}text-success{% endif %}">
+                          {% if value > 0 %}+{% endif %}{{ value }}%
+                        </td>
+                        {% else %}
+                           <td id='{{name}}_{{key}}'>{{value}}</td>
+                        {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span id="stock-list" style="display: none;">
+    {{ stocks|json_script:"stock-data" }}
+  </span>
+  {{ room_name|json_script:"room-name" }}
+  
+  <script>
+    // Parse the list of stocks and room name from JSON script tags
+    const stocks = JSON.parse(document.getElementById('stock-data').textContent);
+    const roomName = JSON.parse(document.getElementById('room-name').textContent);
+  
+    // Convert the stock list to a pipe-separated string and encode it for URL safety
+    const stockString = encodeURIComponent(stocks.join('-'));
+  
+    // Construct the full query string
+    const queryString = `stocks=${stockString}`;
+  
+    // Create the WebSocket connection
+    const stockSocket = new WebSocket(
+      'ws://' +
+      window.location.host +
+      '/ws/stock/' +
+      roomName +
+      '/?' +
+      queryString
+    );
+  
+    stockSocket.onopen = function () {
+      console.log("✅ WebSocket connection established");
+      stockSocket.send(JSON.stringify({ 'message': 'Hello server!' }));
+    };
+  
+    stockSocket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      console.log(data);
+      for(const [key,value] of Object.entries(data)){
+        //console.log(key,value);
+        let price=document.getElementById(`${key}_price`);
+        let mcap=document.getElementById(`${key}_mcap`);
+        let change=document.getElementById(`${key}_change`);
+        if(change){
+          mcap.innerHTML=value['mcap'];
+          price.innerMHTML=value['price'];
+          if (value['change'] >= 0) {
+            change.className = 'text-success';
+            change.innerHTML = '+' +value['change'];
+        } else {
+          change.className = 'text-danger';
+          change.innerHTML = value['change'];
+        }
+        }
+      }
+    };
+  
+    stockSocket.onerror = function (error) {
+      console.error("❌ WebSocket error:", error);
+    };
+  
+    stockSocket.onclose = function () {
+      console.log("🔌 WebSocket closed");
+    };
+  </script>
+{% endblock content %}  

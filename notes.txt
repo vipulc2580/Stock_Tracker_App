@@ -1,0 +1,3 @@
+Once the user selects the stocks the stock data is shown to user now the idea 
+is to upgrade the connection for Stock tracker page and create a periodic task 
+using the celery get data and push to front end using web socket
